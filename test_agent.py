@@ -353,7 +353,7 @@ else:
                 ai_msg_obj = AIMessage(content = ai_content, 
                                         metadata = {"generation_time": end_time_generation - start_time_generation})
                 active_chat["history"].append(ai_msg_obj)
-                update_chat_session(st.session_state.current_chat_id, [user_msg_obj, ai_msg_obj])
+                update_chat_session(st.session_state.current_chat_id, active_chat)
                 print(f"Response generated in {end_time_generation - start_time_generation:.2f} seconds")
                    
                 if len(active_chat["history"]) == 2:
