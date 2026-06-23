@@ -204,7 +204,7 @@ else:
                 placeholder = st.empty()
                 try:
                     message_to_send = active_chat["history"][:-1] + [HumanMessage(content = final_prompt)]
-                    
+                    placeholder.markdown("Generating answer")
                     start_time_generation = time.time()
                     response = client.invoke(message_to_send)
                     ai_content = response.content
