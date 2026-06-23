@@ -8,3 +8,4 @@ pinecone==7.3.0
 pymongo==4.17.0
 pypdf==6.13.1
 certifi==2026.5.20
+bcrypt==5.0.0
