@@ -4,7 +4,7 @@ langchain-core==1.4.8
 langchain-google-genai==4.2.4
 langchain-pinecone==0.2.13
 langchain-text-splitters==1.1.2
-pinecone-client==6.0.0
+pinecone==7.3.0
 pymongo==4.17.0
 pypdf==6.13.1
 certifi==2026.5.20
