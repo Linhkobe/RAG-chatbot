@@ -112,3 +112,15 @@ def update_chat_session(chat_id, chat_data):
         print(f"Updated chat session with ID: {chat_id}")
     else:
         print("MongoDB connection not established. Cannot update chat session.")
+        
+        
+# 4. Delete chat session and its history stored on MongoDB
+def delete_chat_session(chat_id):
+    if db is not None and db.name == "chatbot_db":
+        chat_collection = db["chat_sessions"]
+        chat_collection.delete_one(
+            {"_id": chat_id}
+        )
+        print(f"Delete chat session with ID: {chat_id}")
+    else:
+        print("MongoDB connection not established. Cannot delete chat session.")

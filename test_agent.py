@@ -4,7 +4,7 @@ import streamlit as st
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage, AIMessage
 
-from mongodb import get_mongo_client, json_to_messages, insert_chat_session, update_chat_session
+from mongodb import get_mongo_client, json_to_messages, insert_chat_session, update_chat_session, delete_chat_session
 from auth import register_user, authentificate_user
 from pdf_loader_embedding import reconnect_to_pinecone, process_pdf_to_vector_store, retrieve_relevant_context
 
@@ -78,7 +78,7 @@ else:
         
     with st.sidebar:
         
-        if st.button("Logout"):
+        if st.button("Log out"):
             st.session_state.authentificated = False
             st.session_state.username = None
             if "all_chats" in st.session_state:
@@ -111,13 +111,32 @@ else:
         for chat_id, chat_data in st.session_state.all_chats.items():
             is_current = (chat_id == st.session_state.current_chat_id)
             
-            if st.button(
-                chat_data["title"],
-                key = chat_id, 
-                type = "primary" if is_current else "secondary"
-            ) : 
-                st.session_state.current_chat_id = chat_id
-                st.rerun()
+            col_title, col_delete = st.columns([3,2.4], gap = "xxsmall")
+            
+            with col_title:
+                if st.button(
+                    chat_data["title"],
+                    key = chat_id, 
+                    type = "primary" if is_current else "secondary"
+                ) : 
+                    st.session_state.current_chat_id = chat_id
+                    st.rerun()
+            
+            with col_delete:
+                if st.button("🗑", key = f"del_{chat_id}", help="Delete this chat session"):
+                    # Delete data on MongoDB cloud
+                    delete_chat_session(chat_id)
+                    
+                    # Delete data of session_state
+                    del st.session_state.all_chats[chat_id]
+                    
+                    
+                    if st.session_state.current_chat_id == chat_id:
+                        st.session_state.current_chat_id = None
+                        
+                    st.toast("Chat session deleted successfully")
+                    st.rerun() 
+                    
 
     if not st.session_state.current_chat_id:
         st.info("Click the 'New chat' to start a conversation")
