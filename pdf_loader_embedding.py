@@ -5,6 +5,7 @@ import streamlit as st
 import os
 from google import genai 
 from typing import List
+from pinecone import Pinecone
 
 # Pineconce index name:
 PINECONE_INDEX_NAME = "gemini-chatbot-index"
@@ -86,3 +87,23 @@ def reconnect_to_pinecone(chat_id):
         embedding = embeddings,
         index_name = PINECONE_INDEX_NAME
     )
+    
+# Function to delete namespace on Pinecone 
+def delete_pinecone_namespace(chat_id:str):
+    try:
+        api_key = os.get("PINECONE_API_KEY")
+        if not api_key:
+            print("Pinecone API key not found!")
+            return False 
+        
+        pc = Pinecone(api_key = api_key)
+        
+        # Connect to actual index that is being used : 
+        index = pc.Index(PINECONE_INDEX_NAME)
+        index.delete(delete_all = True, namespace = chat_id)
+        print(f"Successfully cleared Pinecone vector namespace for chat ID: {chat_id}")
+        return True 
+    
+    except Exception as e:
+        print(f"Error clearning Pinecone namespace for chat ID : {chat_id}")
+        return False

@@ -124,6 +124,10 @@ else:
             
             with col_delete:
                 if st.button("🗑", key = f"del_{chat_id}", help="Delete this chat session"):
+                    # Clear vector data on Pinecone
+                    from pdf_loader_embedding import delete_pinecone_namespace
+                    delete_pinecone_namespace(chat_id)
+                    
                     # Delete data on MongoDB cloud
                     delete_chat_session(chat_id)
                     
@@ -134,7 +138,7 @@ else:
                     if st.session_state.current_chat_id == chat_id:
                         st.session_state.current_chat_id = None
                         
-                    st.toast("Chat session deleted successfully")
+                    st.toast("Chat session and vector context are deleted successfully")
                     st.rerun() 
                     
 
