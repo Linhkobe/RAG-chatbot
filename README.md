@@ -1,5 +1,7 @@
 # Multi-user RAG chatbot with Gemeni, MongoDB and Pinecone 
 
+Link to the chatbot : https://nyvpryvjtcbuwdqydrvuwe.streamlit.app/ 
+
 ## 1. Objective of the project 
 The primary objective of this project is to build a full-stack, enterprise-grade AI chatbot : 
 * Production-ready security : Implement a strict authentification system to ensure data isolation between multiple tenants. 
