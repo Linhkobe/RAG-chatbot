@@ -10,8 +10,10 @@ from pinecone import Pinecone
 # Pineconce index name:
 PINECONE_INDEX_NAME = "gemini-chatbot-index"
 
-if "PINECONE_API_KEY" in st.secrets:
-    os.environ["PINECONE_API_KEY"] = st.secrets["PINECONE_API_KEY"]
+# if "PINECONE_API_KEY" in st.secrets:
+#     os.environ["PINECONE_API_KEY"] = st.secrets["PINECONE_API_KEY"]
+
+api_key = os.environ.get("PINECONE_API_KEY") or (st.secrets.get("PINECONE_API_KEY") if hasattr(st, "secrets") else None)
     
 # Document loader to allow user to upload their own PDF and use it as context for the chatbot
 def load_pdf(file):
