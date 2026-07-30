@@ -91,7 +91,7 @@ def reconnect_to_pinecone(chat_id):
 # Function to delete namespace on Pinecone 
 def delete_pinecone_namespace(chat_id:str):
     try:
-        api_key = os.get("PINECONE_API_KEY")
+        api_key = os.environ.get("PINECONE_API_KEY")
         if not api_key:
             print("Pinecone API key not found!")
             return False 

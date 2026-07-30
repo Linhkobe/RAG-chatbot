@@ -1,18 +1,23 @@
 from pymongo import MongoClient
 import streamlit as st
 from langchain_core.messages import HumanMessage, AIMessage
+import os
 
 # MongoDB connection
 def get_mongo_client():
-    if "MONGO_URI" in st.secrets:
-        # os.environ["MONGO_URI"] = st.secrets["MONGO_URI"]
-        mongo_client = MongoClient(st.secrets["MONGO_URI"])
-        db = mongo_client["chatbot_db"]
-        print("MongoDB connection established")
-        return db
-    else:
-        print("MONGO_URI not found in secrets")
-        return None
+    mongo_uri = os.environ.get("MONGO_URI")
+    
+    if not mongo_uri:
+        try:
+            mongo_uri = st.secrets.get("MONGO_URI")
+        except Exception:
+            mongo_uri = None
+            
+    if not mongo_uri:
+        raise ValueError("MONGO_URI is missing from both environment variable and Streamlit secrets.")
+    
+    client = MongoClient(mongo_uri)
+    return client
     
 db = get_mongo_client()
 
