@@ -17,7 +17,7 @@ def get_mongo_client():
         raise ValueError("MONGO_URI is missing from both environment variable and Streamlit secrets.")
     
     client = MongoClient(mongo_uri)
-    return client
+    return client["chatbot_db"]
     
 db = get_mongo_client()
 
