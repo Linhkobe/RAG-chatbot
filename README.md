@@ -1,6 +1,6 @@
 # Multi-user RAG chatbot with Gemeni, MongoDB and Pinecone 
 
-Link to the chatbot : https://nyvpryvjtcbuwdqydrvuwe.streamlit.app/ 
+Link to the chatbot : https://gemini-rag-chatbot-xbgq.onrender.com/
 
 ## 1. Objective of the project 
 The primary objective of this project is to build a full-stack, enterprise-grade AI chatbot : 
@@ -54,7 +54,7 @@ The repository maintains a deployment feedback loop:
 - Synchronization: environment configurations and API parameters are bound safely on server parameters without putting production credentials out in open source. 
 
 ## 6. Deployment 
-The platform is fully deployable via cloud platforms such as Streamlit Community Cloud, render or Haiku: 
+The platform is fully deployable via cloud platform Render: 
 - Connect your version-controller Github repo to the target hosting solution. 
 - Set up your production environment API keys (such as MONGO_URI, PINECONE_API_KEY,...)
 - The platform executes streamlit run test_agent.py automatically exposing the secure SSL interface globally. 
