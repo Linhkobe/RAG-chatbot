@@ -34,6 +34,7 @@ A. Data storage strategy
 - User accounts : saved under "users" collection in MongoDB. Passwords undergo a salt-and-hash cycle via bcrypt before entry. 
 - Coversations : saved under the "chat_sessions" collection in MongoDB. Every doculent explicitely trachs a "user_id" field to enforce strict data-multitenancy.
 - Vector documents : chunks extracted from user-uploaded PDF files are stored inside Pinecone under an isolated "namespace" mapped directly to the activce "chat_id". 
+- Image process : uploaded image (PNG/JPG) are processed in-memory via Pillow and converted to base64 payload format readable for the Gemini model.
 
 B. User Scenarios & Execution Path
 
@@ -43,7 +44,12 @@ B. User Scenarios & Execution Path
 - Retrieval : when a query arrives, it's embedded using the same embedding model, the system pulls the top 3 most semantically identical text pieces out of Pinecone vector database. 
 - Synthesis : the retrieved text chunks are stiched together along with the chat history into a prompt and passed to LLM model Gemini 2.5 Flash to output a precise answer.
 
-* Scenario 2: User only asks questions (standard chat flow)
+* Scenario 2: User uploads an image and asks question
+- image preparation: the uploaded image is read in-memory via PIL.Image and encoded into a standard Base64 string payload.
+- Payload packaging: a LangChain HumanMessage object is constructed containing dual payload (the text prompt/user question along with base64 image URL object)
+- Execution: the composed message payload bypasses vector search and goes directly to Gemini model for visual comprehension, OCR, etc  
+
+* Scenario 3: User only asks questions (standard chat flow)
 - History packaging: the platform pulls current conversation logs out of Streamlit's local "session_state". 
 - Context assembly: it bypasses Pinecone call completely, the pormpt string contains only the user"s message paired with pass messages. 
 - Execution: the structured LangChain payload goes directly to Gemini 2.5 Flash, returning a standrad, fast contextual response. 
@@ -63,4 +69,4 @@ The platform is fully deployable via cloud platform Render:
 To expand this platform into a commercial SaaS application, the following milestones are planned: 
 - Custom text splitter 
 - JWT Token Sessions: Transition from pure Streamlit state variables to secure, time-expiring JSON Web Tokens (JWT) for secure state control.
-- Multimodal Processing: Open the attachment popover options to support real-time audio and image ingestion via Gemini's native multimodal vision capabilities.
+- Multimodal Processing: Open the attachment popover options to support real-time audio ingestion via Gemini's native multimodal vision capabilities.

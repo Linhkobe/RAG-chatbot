@@ -8,6 +8,9 @@ from mongodb import get_mongo_client, json_to_messages, insert_chat_session, upd
 from auth import register_user, authentificate_user
 from pdf_loader_embedding import reconnect_to_pinecone, process_pdf_to_vector_store, retrieve_relevant_context
 
+import base64
+from io import BytesIO
+
 st.title("Gemini-2.5-flash Chatbot")
 @st.cache_resource
 def initialize_client():
@@ -177,8 +180,14 @@ else:
                         key = f"file_uploader_{st.session_state.current_chat_id}",
                         label_visibility = "visible"
                     )
+                
+                uploaded_image = st.file_uploader(
+                    "Image context (JPG, PNG)",
+                    type = ["jpg", "jpeg", "png"],
+                    key = f"image_uploader_{st.session_state.current_chat_id}",
+                    label_visibility = "visible"
+                )
                 st.caption("Future options:")
-                st.button("Upload image", disabled = True, use_container_width = True)
                 st.button("Upload audio", disabled = True, use_container_width = True)
                 
             user_message = st.chat_input("Type your message here", key = f"user_input_{st.session_state.current_chat_id}")
@@ -207,11 +216,22 @@ else:
                     
                 except Exception as e:
                     st.error(f"Error loading PDF: {str(e)}")
+                    
+        # Process image file 
+        image_object = None
+        if uploaded_image is not None:
+            try:
+                from PIL import Image
+                image_object = Image.open(uploaded_image)
+            except Exception as e:
+                st.error(f"Error loading image: {str(e)}")
         
         # Input for new message
         if user_message :
             with st.chat_message("user"):
                 st.write(user_message)
+                if image_object is not None:
+                    st.image(image_object, caption = "Uploaded image", width = 250)
             #active_chat["history"].append({"role": "user", "text": user_message})
             
             final_prompt = user_message
@@ -219,6 +239,23 @@ else:
             if uploaded_file is not None and active_chat["vector_store"]:
                 relevant_context = retrieve_relevant_context(active_chat["vector_store"], user_message)
                 final_prompt = f"Please answer the user's question based on the provided context and conversation history: {relevant_context}\n\nUser question: {user_message}"
+                
+            if image_object is not None:
+                # Convert image to base64 string
+                buffered = BytesIO()
+                image_object.save(buffered, format="PNG")
+                img_str = base64.b64encode(buffered.getvalue()).decode("utf-8")
+                
+                payload_content = [
+                    {"type": "text", "text": final_prompt},
+            {
+                "type": "image_url",
+                "image_url": {"url": f"data:image/jpeg;base64,{img_str}"}
+            }
+                ]
+                lastest_human_message = HumanMessage(content = payload_content)
+            else:
+                lastest_human_message = HumanMessage(content = final_prompt)
             
             active_chat["history"].append(HumanMessage(content = user_message))
             
@@ -226,7 +263,7 @@ else:
             with st.chat_message("assistant"):
                 placeholder = st.empty()
                 try:
-                    message_to_send = active_chat["history"][:-1] + [HumanMessage(content = final_prompt)]
+                    message_to_send = active_chat["history"][:-1] + [lastest_human_message]
                     placeholder.markdown("Generating answer")
                     start_time_generation = time.time()
                     response = client.invoke(message_to_send)
@@ -238,7 +275,6 @@ else:
                     placeholder.write(ai_content)
                     
                     # 2 mesages objects: HumanMessage and AIMessage, both have content and metadata attributes. We can store the generation time in the metadata of the AIMessage object.
-                    user_msg_obj = HumanMessage(content = user_message)
                     ai_msg_obj = AIMessage(content = ai_content, 
                                             metadata = {"generation_time": end_time_generation - start_time_generation})
                     active_chat["history"].append(ai_msg_obj)
