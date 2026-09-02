@@ -187,8 +187,12 @@ else:
                     key = f"image_uploader_{st.session_state.current_chat_id}",
                     label_visibility = "visible"
                 )
-                st.caption("Future options:")
-                st.button("Upload audio", disabled = True, use_container_width = True)
+                uploaded_audio = st.file_uploader(
+                    "Audio context (MP3, WAV)",
+                    type = ["mp3", "wav"],
+                    key = f"audio_uploader_{st.session_state.current_chat_id}",
+                    label_visibility = "visible"
+                )
                 
             user_message = st.chat_input("Type your message here", key = f"user_input_{st.session_state.current_chat_id}")
             
@@ -226,12 +230,15 @@ else:
             except Exception as e:
                 st.error(f"Error loading image: {str(e)}")
         
+        audio_object = None
         # Input for new message
         if user_message :
             with st.chat_message("user"):
                 st.write(user_message)
                 if image_object is not None:
                     st.image(image_object, caption = "Uploaded image", width = 250)
+                if audio_object is not None:
+                    st.audio(uploaded_audio)
             #active_chat["history"].append({"role": "user", "text": user_message})
             
             final_prompt = user_message
@@ -240,23 +247,31 @@ else:
                 relevant_context = retrieve_relevant_context(active_chat["vector_store"], user_message)
                 final_prompt = f"Please answer the user's question based on the provided context and conversation history: {relevant_context}\n\nUser question: {user_message}"
                 
+            # Payload multimodel
+            payload_content = [{"type": "text", "text": final_prompt}]
+            
             if image_object is not None:
                 # Convert image to base64 string
                 buffered = BytesIO()
                 image_object.save(buffered, format="PNG")
                 img_str = base64.b64encode(buffered.getvalue()).decode("utf-8")
+                payload_content.append({
+                    "type": "image_url",
+                    "image_url": {"url": f"data:image/png;base64,{img_str}"}
+                })
                 
-                payload_content = [
-                    {"type": "text", "text": final_prompt},
-            {
-                "type": "image_url",
-                "image_url": {"url": f"data:image/jpeg;base64,{img_str}"}
-            }
-                ]
-                lastest_human_message = HumanMessage(content = payload_content)
-            else:
-                lastest_human_message = HumanMessage(content = final_prompt)
-            
+            if uploaded_audio is not None:
+                audio_bytes = uploaded_audio.read()
+                audio_base64 = base64.b64encode(audio_bytes).decode("utf-8")
+                mime_type = "audio/mp3" if uploaded_audio.name.lower().endswith(".mp3") else "audio/wav"
+                payload_content.append({
+                    "type": "media",
+                    "mime_type": mime_type,
+                    "data": audio_base64
+                })
+                
+            lastest_human_message = HumanMessage(content = payload_content)
+                
             active_chat["history"].append(HumanMessage(content = user_message))
             
             # Call API for the active chat
