@@ -74,4 +74,3 @@ The platform is fully deployable via cloud platform Render:
 To expand this platform into a commercial SaaS application, the following milestones are planned: 
 - Custom text splitter 
 - JWT Token Sessions: Transition from pure Streamlit state variables to secure, time-expiring JSON Web Tokens (JWT) for secure state control.
-- Multimodal Processing: Open the attachment popover options to support real-time audio ingestion via Gemini's native multimodal vision capabilities.
