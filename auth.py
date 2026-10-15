@@ -1,5 +1,30 @@
 import bcrypt
 from pymongo import MongoClient 
+import os
+import datetime
+import jwt
+import streamlit as st 
+
+JWT_SECRET = os.environ.get("JWT_SECRET") or st.secrets.get("JWT_SECRET")
+JWT_ALGORITHM = "HS256"
+JWT_EXPIRATION_HOURS = 24
+
+def generate_jwt_token(username: str) -> str:
+    payload = {
+        "username" : username, 
+        "exp" : datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=JWT_EXPIRATION_HOURS),
+        "iat" : datetime.datetime.now(datetime.timezone.utc)
+    }
+    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+
+def decode_jwt_token(token: str):
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        return payload
+    except jwt.ExpiredSignatureError:
+        return None
+    except jwt.InvalidTokenError:
+        return None
 
 # Function to identify the user
 def hash_password(password: str) -> str:

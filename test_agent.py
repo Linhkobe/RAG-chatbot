@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from google.genai import errors
 import time
 import streamlit as st
@@ -10,6 +12,23 @@ from pdf_loader_embedding import reconnect_to_pinecone, process_pdf_to_vector_st
 
 import base64
 from io import BytesIO
+import extra_streamlit_components as stx
+from auth import registrer_user, authentificate_user, generate_jwt_token, decode_jwt_token
+
+cookie_manager = stx.CookieManager(key = "cookie_manager")
+token = cookie_manager.get("auth_token")
+
+if "authentificated" not in st.session_state:
+    st.session_state.authentificated = False
+    st.session_state.username = None
+    
+if token and not st.session_state.authentificated:
+    username_from_token = decode_jwt_token(token)
+    if username_from_token:
+        st.session_state.authentificated = True
+        st.session_state.username = username_from_token
+    else:
+        cookie_manager.delete("auth_token")
 
 st.title("Gemini-2.5-flash Chatbot")
 @st.cache_resource
@@ -45,6 +64,8 @@ if not st.session_state.authentificated:
             if login_user and login_pass:
                 success, msg = authentificate_user(db, login_user, login_pass)
                 if success:
+                    jwt_token = generate_jwt_token(login_user)
+                    cookie_manager.set("auth_token", jwt_token, expires_at=datetime.datetime.now() + datetime.timedelta(days=1))
                     st.session_state.authentificated = True
                     st.session_state.username = login_user
                     st.success(msg)
@@ -82,6 +103,7 @@ else:
     with st.sidebar:
         
         if st.button("Log out"):
+            cookie_manager.delete("auth_token")
             st.session_state.authentificated = False
             st.session_state.username = None
             if "all_chats" in st.session_state:
