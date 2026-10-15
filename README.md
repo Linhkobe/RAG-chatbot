@@ -73,4 +73,3 @@ The platform is fully deployable via cloud platform Render:
 ## 7. Future extensions 
 To expand this platform into a commercial SaaS application, the following milestones are planned: 
 - Custom text splitter 
-- JWT Token Sessions: Transition from pure Streamlit state variables to secure, time-expiring JSON Web Tokens (JWT) for secure state control.

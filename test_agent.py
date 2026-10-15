@@ -1,4 +1,4 @@
-from datetime import datetime
+import datetime
 
 from google.genai import errors
 import time
@@ -13,22 +13,30 @@ from pdf_loader_embedding import reconnect_to_pinecone, process_pdf_to_vector_st
 import base64
 from io import BytesIO
 import extra_streamlit_components as stx
-from auth import registrer_user, authentificate_user, generate_jwt_token, decode_jwt_token
+from auth import register_user, authentificate_user, generate_jwt_token, decode_jwt_token
 
-cookie_manager = stx.CookieManager(key = "cookie_manager")
-token = cookie_manager.get("auth_token")
+cookie_manager = stx.CookieManager(key="global_cookie_manager")
 
+# Initialize authentification in session_state
 if "authentificated" not in st.session_state:
     st.session_state.authentificated = False
+if "username" not in st.session_state:
     st.session_state.username = None
+if "logout_triggered" not in st.session_state:
+    st.session_state.logout_triggered = False
+
+cookies = cookie_manager.get_all()
     
-if token and not st.session_state.authentificated:
-    username_from_token = decode_jwt_token(token)
-    if username_from_token:
-        st.session_state.authentificated = True
-        st.session_state.username = username_from_token
-    else:
-        cookie_manager.delete("auth_token")
+if not st.session_state.authentificated and not st.session_state.logout_triggered:
+    token = cookie_manager.get("auth_token")
+    if token:
+        decoded_data = decode_jwt_token(token)
+        if decoded_data and "username" in decoded_data:
+            st.session_state.authentificated = True
+            st.session_state.username = decoded_data["username"]
+            st.rerun()
+        else:
+            cookie_manager.delete("auth_token")
 
 st.title("Gemini-2.5-flash Chatbot")
 @st.cache_resource
@@ -45,12 +53,6 @@ client = initialize_client()
     
 # MongoDB connection
 db = get_mongo_client()
-
-# Initialize authentification in session_state
-if "authentificated" not in st.session_state:
-    st.session_state.authentificated = False
-if "username" not in st.session_state:
-    st.session_state.username = None
     
 if not st.session_state.authentificated:
     st.subheader("Authentification for RAG chatbot")
@@ -68,6 +70,7 @@ if not st.session_state.authentificated:
                     cookie_manager.set("auth_token", jwt_token, expires_at=datetime.datetime.now() + datetime.timedelta(days=1))
                     st.session_state.authentificated = True
                     st.session_state.username = login_user
+                    st.session_state.logout_triggered = False
                     st.success(msg)
                     st.rerun()
                 else:
@@ -106,6 +109,7 @@ else:
             cookie_manager.delete("auth_token")
             st.session_state.authentificated = False
             st.session_state.username = None
+            st.session_state.logout_triggered = True
             if "all_chats" in st.session_state:
                 del st.session_state.all_chats
             st.session_state.current_chat_id = None
